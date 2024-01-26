@@ -35,10 +35,10 @@ PAGE = """\
 
 # Load sample pictures and learn how to recognize them.
 obama_image = face_recognition.load_image_file("./faces/obama.jpg")
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+obama_face_encoding = face_recognition.face_encodings(obama_image, model="small")[0]
 
-biden_image = face_recognition.load_image_file("./faces/biden.jpg")
-biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+#biden_image = face_recognition.load_image_file("./faces/biden.jpg")
+#biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
 #nel_image = face_recognition.load_image_file("./faces/nel.jpg")
 #nel_face_encoding = face_recognition.face_encodings(nel_image)[0]
@@ -46,23 +46,23 @@ biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 #ek_image = face_recognition.load_image_file("./faces/ek.jpg")
 #ek_face_encoding = face_recognition.face_encodings(ek_image)[0]
 
-me_image = face_recognition.load_image_file("./faces/me.jpg")
-me_face_encoding = face_recognition.face_encodings(me_image)[0]
+#me_image = face_recognition.load_image_file("./faces/me.jpg")
+#me_face_encoding = face_recognition.face_encodings(me_image)[0]
 
 # Create arrays of known face encodings and their names
 known_face_encodings = [
     obama_face_encoding,
-    biden_face_encoding,
+    #biden_face_encoding,
     #nel_face_encoding,
     #ek_face_encoding,
-    me_face_encoding,
+    #me_face_encoding,
 ]
 known_face_names = [
     "Barack Obama",
-    "Joe Biden",
+    #"Joe Biden",
     #"Nelson Kanda",
     #"Alex El-Khoury",
-    "Haydon Behl",
+    #"Haydon Behl",
 ]
 
 # Class to handle streaming output
@@ -191,7 +191,7 @@ if picamera:        # Create Picamera2 instance and configure it
     # 2 is 1 but zoomed in
     # 3 just is 1
     picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
-    picam2.configure(picam2.create_preview_configuration({'format': 'RGB888'}, sensor={'output_size': mode['size'], 'bit_depth': mode['bit_depth']}))
+    picam2.configure(picam2.create_preview_configuration({'format': 'RGB888'}))
     picam2.awb_mode = 'incandescent'
     output = StreamingOutput()
     picam2.start_recording(JpegEncoder(), FileOutput(output))
@@ -199,6 +199,7 @@ else: video_capture = cv2.VideoCapture(0)       # Get a reference to webcam #0 (
 time.sleep(2)
 
 try:
+    print("Trying to start server.")
     # Set up and start the streaming server
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
