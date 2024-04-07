@@ -1,3 +1,4 @@
+import threading
 from datetime import timedelta
 import time
 import pandas as pd
@@ -7,8 +8,15 @@ from config import *
 
 
 class Assistant:
-    def __init__(self, user):
-        self.user = user
+    def __init__(self):
+        self.user = ""
+        self.thread = threading.Thread(target=self.run)
+        self.thread.start()
+
+    def run(self):
+        print("STARTING ASSISTANT")
+        while self.user == "":
+            time.sleep(0.5)
         self.user_input = "Hi assistant!"
         self.conversation = ""
         client = openai.OpenAI()
@@ -56,6 +64,10 @@ class Assistant:
     def set_input(self, user_input):
         self.user_input = user_input
 
+    def set_user(self, user):
+        self.user = user
+
     def get_conversation(self):
         return self.conversation
 
+assistant = Assistant()

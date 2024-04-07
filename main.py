@@ -16,12 +16,14 @@ import time
 import cv2
 import face_recognition
 import numpy as np
+import threading
 
 from gpt import Assistant
 
 DEBUG = False  # More verbose debug
 picamera = True  # USE PICAMERA?
-assistant = False  # needs to be created after detecting user
+from gpt import assistant
+
 
 # Load sample pictures and learn how to recognize them.
 obama_image = face_recognition.load_image_file("./faces/obama.jpg")
@@ -71,10 +73,9 @@ class StreamingOutput(io.BufferedIOBase):
 # Class to handle HTTP requests
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def update_page(self):
-        #while True:
-            # HTML page for the MJPEG streaming demo
-            if not assistant:
-                self.PAGE = """\
+        # HTML page for the MJPEG streaming demo
+        if assistant.user == "":
+            self.PAGE = """\
                 <html>
                 <head>
                 <title>WOC</title>
@@ -85,8 +86,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 </body>
                 </html>
                 """
-            else:
-                self.PAGE = f"""\
+        else:
+            self.PAGE = f"""\
                 <html>
                 <head>
                 <title>WOC</title>
@@ -166,12 +167,10 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                             name = known_face_names[best_match_index]
 
                         face_names.append(name)
-                        #if name != "Unknown":
-                        #    assistant = Assistant(name)
+                        if name != "Unknown":
+                            assistant.set_user(name)
 
-                        #if assistant:
-
-
+                        # if assistant:
 
                     # Display the results
                     for (top, right, bottom, left), name in zip(face_locations, face_names):
@@ -247,3 +246,6 @@ finally:
         video_capture.release()
     cv2.destroyAllWindows()
     print("Done!")
+
+#assistant.set_input("exit")
+#assistant_thread.join()
