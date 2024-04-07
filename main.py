@@ -70,11 +70,11 @@ class StreamingOutput(io.BufferedIOBase):
 
 # Class to handle HTTP requests
 class StreamingHandler(server.BaseHTTPRequestHandler):
-    def serve_page(self):
-        while True:
+    def update_page(self):
+        #while True:
             # HTML page for the MJPEG streaming demo
             if not assistant:
-                PAGE = """\
+                self.PAGE = """\
                 <html>
                 <head>
                 <title>WOC</title>
@@ -86,7 +86,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 </html>
                 """
             else:
-                PAGE = f"""\
+                self.PAGE = f"""\
                 <html>
                 <head>
                 <title>WOC</title>
@@ -100,14 +100,6 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 </html>
                 """
 
-            # Serve the HTML page
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-
     def do_GET(self):
         if self.path == '/':
             # Redirect root path to index.html
@@ -115,7 +107,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Location', '/index.html')
             self.end_headers()
         elif self.path == '/index.html':
-            self.serve_page()
+            self.update_page()
+            # Serve the HTML page
+            content = self.PAGE.encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.send_header('Content-Length', len(content))
+            self.end_headers()
+            self.wfile.write(content)
         elif self.path == '/stream.mjpg':
             # Set up MJPEG streaming
             self.send_response(200)
@@ -167,8 +166,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                             name = known_face_names[best_match_index]
 
                         face_names.append(name)
-                        if name != "Unknown":
-                            assistant = Assistant(name)
+                        #if name != "Unknown":
+                        #    assistant = Assistant(name)
 
                         #if assistant:
 
