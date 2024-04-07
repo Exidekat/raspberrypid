@@ -17,21 +17,11 @@ import cv2
 import face_recognition
 import numpy as np
 
-DEBUG = False # More verbose debug
-picamera = True # USE PICAMERA?
+from gpt import Assistant
 
-# HTML page for the MJPEG streaming demo
-PAGE = """\
-<html>
-<head>
-<title>WOC</title>
-</head>
-<body>
-<h1>Big WOC is watching you</h1>
-<img src="stream.mjpg" width="640" height="480" />
-</body>
-</html>
-"""
+DEBUG = False  # More verbose debug
+picamera = True  # USE PICAMERA?
+assistant = False  # needs to be created after detecting user
 
 # Load sample pictures and learn how to recognize them.
 obama_image = face_recognition.load_image_file("./faces/obama.jpg")
@@ -40,11 +30,11 @@ obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 biden_image = face_recognition.load_image_file("./faces/biden.jpg")
 biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
-#nel_image = face_recognition.load_image_file("./faces/nel.jpg")
-#nel_face_encoding = face_recognition.face_encodings(nel_image)[0]
+# nel_image = face_recognition.load_image_file("./faces/nel.jpg")
+# nel_face_encoding = face_recognition.face_encodings(nel_image)[0]
 
-#ek_image = face_recognition.load_image_file("./faces/ek.jpg")
-#ek_face_encoding = face_recognition.face_encodings(ek_image)[0]
+# ek_image = face_recognition.load_image_file("./faces/ek.jpg")
+# ek_face_encoding = face_recognition.face_encodings(ek_image)[0]
 
 me_image = face_recognition.load_image_file("./faces/me.jpg")
 me_face_encoding = face_recognition.face_encodings(me_image)[0]
@@ -53,17 +43,18 @@ me_face_encoding = face_recognition.face_encodings(me_image)[0]
 known_face_encodings = [
     obama_face_encoding,
     biden_face_encoding,
-    #nel_face_encoding,
-    #ek_face_encoding,
+    # nel_face_encoding,
+    # ek_face_encoding,
     me_face_encoding,
 ]
 known_face_names = [
     "Barack Obama",
     "Joe Biden",
-    #"Nelson Kanda",
-    #"Alex El-Khoury",
+    # "Nelson Kanda",
+    # "Alex El-Khoury",
     "Haydon Behl",
 ]
+
 
 # Class to handle streaming output
 class StreamingOutput(io.BufferedIOBase):
@@ -76,15 +67,39 @@ class StreamingOutput(io.BufferedIOBase):
             self.frame = buf
             self.condition.notify_all()
 
+
 # Class to handle HTTP requests
 class StreamingHandler(server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/':
-            # Redirect root path to index.html
-            self.send_response(301)
-            self.send_header('Location', '/index.html')
-            self.end_headers()
-        elif self.path == '/index.html':
+    def serve_page(self):
+        while True:
+            # HTML page for the MJPEG streaming demo
+            if not assistant:
+                PAGE = """\
+                <html>
+                <head>
+                <title>WOC</title>
+                </head>
+                <body>
+                <h1>RPid Assistant</h1>
+                <img src="stream.mjpg" width="640" height="480" />
+                </body>
+                </html>
+                """
+            else:
+                PAGE = f"""\
+                <html>
+                <head>
+                <title>WOC</title>
+                </head>
+                <body>
+                <h1>RPid Assistant</h1>
+                <img src="stream.mjpg" width="640" height="480" />
+                <p>{assistant.get_conversation()}</p>
+                <input></input>
+                </body>
+                </html>
+                """
+
             # Serve the HTML page
             content = PAGE.encode('utf-8')
             self.send_response(200)
@@ -92,6 +107,15 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Length', len(content))
             self.end_headers()
             self.wfile.write(content)
+
+    def do_GET(self):
+        if self.path == '/':
+            # Redirect root path to index.html
+            self.send_response(301)
+            self.send_header('Location', '/index.html')
+            self.end_headers()
+        elif self.path == '/index.html':
+            self.serve_page()
         elif self.path == '/stream.mjpg':
             # Set up MJPEG streaming
             self.send_response(200)
@@ -102,14 +126,16 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 startTime = time.time()
-                spf = 1./30.
+                spf = 1. / 30.
                 while True:
                     time.sleep(0.005)
                     if time.time() - startTime < spf: continue
                     startTime = time.time()
 
-                    if picamera: frame = picam2.capture_array("main")
-                    else: ret, frame = video_capture.read()
+                    if picamera:
+                        frame = picam2.capture_array("main")
+                    else:
+                        ret, frame = video_capture.read()
 
                     frame = np.ascontiguousarray(frame)
                     if DEBUG:
@@ -141,6 +167,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                             name = known_face_names[best_match_index]
 
                         face_names.append(name)
+                        if name != "Unknown":
+                            assistant = Assistant(name)
+
+                        #if assistant:
+
+
 
                     # Display the results
                     for (top, right, bottom, left), name in zip(face_locations, face_names):
@@ -178,24 +210,28 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_error(404)
             self.end_headers()
 
+
 # Class to handle streaming server
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-if picamera:        # Create Picamera2 instance and configure it
+
+if picamera:  # Create Picamera2 instance and configure it
     picam2 = Picamera2()
-    mode = picam2.sensor_modes[3] #prevents the pi5 from being stupid
+    mode = picam2.sensor_modes[3]  # prevents the pi5 from being stupid
     # 0 is green
     # 1 is blueish and yellow monitor
     # 2 is 1 but zoomed in
     # 3 just is 1
     picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
-    picam2.configure(picam2.create_preview_configuration({'format': 'RGB888'}, sensor={'output_size': mode['size'], 'bit_depth': mode['bit_depth']}))
+    picam2.configure(picam2.create_preview_configuration({'format': 'RGB888'}, sensor={'output_size': mode['size'],
+                                                                                       'bit_depth': mode['bit_depth']}))
     picam2.awb_mode = 'incandescent'
     output = StreamingOutput()
     picam2.start_recording(JpegEncoder(), FileOutput(output))
-else: video_capture = cv2.VideoCapture(0)       # Get a reference to webcam #0 (the default one)
+else:
+    video_capture = cv2.VideoCapture(0)  # Get a reference to webcam #0 (the default one)
 time.sleep(2)
 
 try:
@@ -206,7 +242,9 @@ try:
     server.serve_forever()
 finally:
     # Stop recording when the script is interrupted
-    if picamera: picam2.stop_recording()
-    else: video_capture.release()
+    if picamera:
+        picam2.stop_recording()
+    else:
+        video_capture.release()
     cv2.destroyAllWindows()
     print("Done!")
