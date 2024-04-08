@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import cgi
 import io
 import logging
 import os
@@ -16,9 +16,6 @@ import time
 import cv2
 import face_recognition
 import numpy as np
-import threading
-
-from gpt import Assistant
 
 DEBUG = False  # More verbose debug
 picamera = True  # USE PICAMERA?
@@ -72,6 +69,22 @@ class StreamingOutput(io.BufferedIOBase):
 
 # Class to handle HTTP requests
 class StreamingHandler(server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        logging.error(self.headers)
+        form = cgi.FieldStorage(
+            fp=self.rfile,
+            headers=self.headers,
+            environ={'REQUEST_METHOD':'POST',
+                     'CONTENT_TYPE':self.headers['Content-Type'],
+                     })
+        for item in form.list:
+            logging.error(item)
+        user_input = str(form.getvalue(str('user')))
+        print("USER INPUT REQUEST:", user_input)
+        assistant.set_input(user_input)
+        #time.sleep(0.5)  # allows bot to update
+        self.do_GET()
+
     def update_page(self):
         # HTML page for the MJPEG streaming demo
         if assistant.user == "":
@@ -83,10 +96,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 <body>
                 <h1>RPid Assistant</h1>
                 <img src="stream.mjpg" width="640" height="480" />
+                <p>No valid users provided.</p>
+                <input type="button" value = "Validate User" onclick="history.go(0)" />
                 </body>
                 </html>
                 """
         else:
+            while assistant.user_input != "":
+                time.sleep(1)  # Wait for 1 second
             self.PAGE = f"""\
                 <html>
                 <head>
@@ -94,14 +111,25 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 </head>
                 <body>
                 <h1>RPid Assistant</h1>
-                <img src="stream.mjpg" width="640" height="480" />
-                <p>{assistant.get_conversation()}</p>
-                <input></input>
+                <img src="stream.mjpg" width="640" height="480" />"""
+            for dialogue in assistant.get_conversation():
+                self.PAGE += f"""<p>{dialogue}\n</p>"""
+            self.PAGE += """
+                <form action='' method='POST'> 
+                <label> Talk to assistant: </label> 
+                <input type='user' name='user' value=''> 
+                <button type='submit'> Submit </button> 
+                </form> 
                 </body>
                 </html>
                 """
+        self.content = self.PAGE.encode('utf-8')
 
     def do_GET(self):
+        #if request.method == 'POST':
+        #    user_input = request.form['user']
+        #    print(user_input)
+        #    assistant.set_input(user_input)
         if self.path == '/':
             # Redirect root path to index.html
             self.send_response(301)
@@ -110,12 +138,11 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == '/index.html':
             self.update_page()
             # Serve the HTML page
-            content = self.PAGE.encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
+            self.send_header('Content-Length', len(self.content))
             self.end_headers()
-            self.wfile.write(content)
+            self.wfile.write(self.content)
         elif self.path == '/stream.mjpg':
             # Set up MJPEG streaming
             self.send_response(200)
