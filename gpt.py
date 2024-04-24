@@ -37,7 +37,7 @@ class Assistant:
             self.run = client.beta.threads.runs.create(
                 thread_id=thread.id,
                 assistant_id=assistant.id,
-                instructions=f"Please address the user as {USER}. The user has a premium account."
+                instructions=f"Please address the user as {self.user}. The user has a premium account."
             )
             while self.run.status in ['queued', 'in_progress', 'cancelling']:
                 time.sleep(1)  # Wait for 1 second
