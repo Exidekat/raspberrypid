@@ -47,8 +47,8 @@ known_face_encodings = [
     haydon_face_encoding,
 ]
 known_face_names = [
-    "Barack Obama",
-    "Joe Biden",
+    "Neal Chandra",
+    "Brian Chiang",
     # "Nelson Kanda",
     # "Alex El-Khoury",
     "Haydon Behl",
