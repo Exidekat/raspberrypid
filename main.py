@@ -23,28 +23,28 @@ from gpt import assistant
 
 
 # Load sample pictures and learn how to recognize them.
-obama_image = face_recognition.load_image_file("./faces/obama.jpg")
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+#obama_image = face_recognition.load_image_file("./faces/obama.jpg")
+#obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
-biden_image = face_recognition.load_image_file("./faces/biden.jpg")
-biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
+#biden_image = face_recognition.load_image_file("./faces/biden.jpg")
+#biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
-# nel_image = face_recognition.load_image_file("./faces/nel.jpg")
-# nel_face_encoding = face_recognition.face_encodings(nel_image)[0]
+neal_image = face_recognition.load_image_file("./faces/neal.jpg")
+neal_face_encoding = face_recognition.face_encodings(neal_image)[0]
 
-# ek_image = face_recognition.load_image_file("./faces/ek.jpg")
-# ek_face_encoding = face_recognition.face_encodings(ek_image)[0]
+brian_image = face_recognition.load_image_file("./faces/brian.jpg")
+brian_face_encoding = face_recognition.face_encodings(brian_image)[0]
 
-me_image = face_recognition.load_image_file("./faces/me.jpg")
-me_face_encoding = face_recognition.face_encodings(me_image)[0]
+haydon_image = face_recognition.load_image_file("./faces/me.jpg")
+haydon_face_encoding = face_recognition.face_encodings(haydon_image)[0]
 
 # Create arrays of known face encodings and their names
 known_face_encodings = [
-    obama_face_encoding,
-    biden_face_encoding,
-    # nel_face_encoding,
-    # ek_face_encoding,
-    me_face_encoding,
+    #obama_face_encoding,
+    #biden_face_encoding,
+    neal_face_encoding,
+    brian_face_encoding,
+    haydon_face_encoding,
 ]
 known_face_names = [
     "Barack Obama",
