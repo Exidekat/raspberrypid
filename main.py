@@ -29,10 +29,10 @@ from gpt import assistant
 #biden_image = face_recognition.load_image_file("./faces/biden.jpg")
 #biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
-neal_image = face_recognition.load_image_file("./faces/neal.jpg")
+neal_image = face_recognition.load_image_file("./faces/neal.png")
 neal_face_encoding = face_recognition.face_encodings(neal_image)[0]
 
-brian_image = face_recognition.load_image_file("./faces/brian.jpg")
+brian_image = face_recognition.load_image_file("./faces/brian.png")
 brian_face_encoding = face_recognition.face_encodings(brian_image)[0]
 
 haydon_image = face_recognition.load_image_file("./faces/me.jpg")
